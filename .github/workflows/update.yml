@@ -1,0 +1,33 @@
+name: Update Gemini VPN
+on:
+  schedule:
+    - cron: '15 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Merge Gemini countries
+        run: |
+          cat << 'EOF' > gemini
+          #profile-update-interval: 1
+          #profile-title: AkresVPN Gemini
+          #subscription-userinfo: upload=0; download=0; total=0; expire=0
+          #support-url: https://t.me/AkresMC
+          #profile-web-page-url: https://vpn.akres.fun
+          EOF
+          for cc in US SG TR CA KR JP IN HK MD RS AU ID UZ UA AL AM VN IL QA MX AE TH TW KZ GE CL CO; do
+            curl -fsSL "https://raw.githubusercontent.com/theakres/VPN/main/countries/$cc" | grep -v '^#' >> gemini || true
+            echo "" >> gemini
+          done
+          sed -i '/^$/d' gemini
+      - name: Save file
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add gemini
+          git diff --staged --quiet || git commit -m "Auto-update Gemini list"
+          git push
